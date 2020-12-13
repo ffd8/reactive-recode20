@@ -1,0 +1,16 @@
+{
+  "version": "1.3.3",
+  "revision": 37,
+  "count": {
+    "sketches": 1,
+    "folders": 0
+  },
+  "structure": [
+    {
+      "name": "reactive-recode-20-intro",
+      "mod": 1607878779504,
+      "type": "sketch",
+      "code": "let font, myText = [\"<REACTIVE\", \"RECODE>\"];\nlet points = [];\nlet sScale, sSpeed, sSat;\n\n\n\nfunction setup() {\n\tcreateCanvas(windowWidth, windowHeight);\n\tnoStroke();\n\tfill(255);\n\tfont = loadFont('includes/fonts/RobotoMono-Regular.ttf', function() {\n\t\tgetPoints(myText);\n\t});\n\t\n\tsetupAudio();\n\t\n\tsScale = createSlider(.1, 3, 1, .1);\n\tsScale.position(width-150, 55);\n\n\tsSpeed = createSlider(.01, .1, .05, .01);\n\tsSpeed.position(width-150, 75);\n\t\n\tsSat= createSlider(0, 100, 0, .1);\n\tsSat.position(width-150, 95);\n\tcolorMode(HSB)\n}\n\nfunction draw() {\n\tupdateAudio();\n\tpush()\n\tcolorMode(RGB)\n\tbackground(0, 75);\n\tpop();\n\tlet maxSize = 1 + mouseX / 100 + ampEase/2;\n\trectMode(CENTER)\n\ttranslate(width / 2, height/2);\n\t// translate(width / 2 - bounds.w / 2, height / 2 + bounds.h / 2, 0)\n\tscale(sScale.value())\n\tif(points.length > 0) {\n\t\tfor(let j = 0; j < points[0].length; j += 2) {\n\t\t\tvar pt = points[0][j];\n\t\t\tfill(50+(frameCount*.05+j*.2)%50, sSat.value(), 100);\n\t\t\tellipse(pt.x, pt.y, maxSize * sin(j * .1 + frameCount * sSpeed.value()))\n\t\t}\n\n\t\ttranslate(0, height * .25);\n\t\tfor(let j = 0; j < points[1].length; j += 2) {\n\t\t\tvar pt = points[1][j];\n\t\t\tfill(150+(frameCount*.05+j*.2)%50, sSat.value(), 100);\n\t\t\tellipse(pt.x, pt.y, maxSize * cos(j * .1 + frameCount * sSpeed.value()))\n\t\t}\n\t}\n}\n\nfunction getPoints(txt) {\n\tlet s = width / txt[0].length;\n\tfor(let i = 0; i < txt.length; i++) {\n\t\tlet bounds = font.textBounds(txt[i], 0, 0, s);\n\t\tpoints[i] = font.textToPoints(txt[i], -bounds.w/2, -bounds.h/2, s);\n\t}\n}\n\n/* AUDIO INIT */\nlet mic, fftRaw, fft = [],\n\twaveform = [],\n\tamp = 0.0,\n\tampEase = 0.0,\n\tnumBins = 512,\n\tbands = 12;\n\nfunction setupAudio() {\n\tuserStartAudio();\n\tmic = new p5.AudioIn();\n\tmic.start();\n\tfftRaw = new p5.FFT(0.75, numBins);\n\tfftRaw.setInput(mic);\n}\n\nfunction updateAudio() {\n\tfftRaw.analyze();\n\tamp = mic.getLevel() * 1000; // average amplitude\n\tampEase = ease(amp, ampEase, 0.075); // smooth 'amp'\n\twaveform = fftRaw.waveform(); // array (-1, 1)\n\tfft = fftRaw.logAverages(fftRaw.getOctaveBands(bands)); // array (0, 255)\n}"
+    }
+  ]
+}
