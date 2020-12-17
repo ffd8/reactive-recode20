@@ -51,7 +51,7 @@
 			if(n != null){
 				myCustomData = { 'lineNumber': n }
 			}
-			var event = new CustomEvent('myEvent', { detail: myCustomData });
+			var event = new CustomEvent('p5Status', { detail: myCustomData });
 			window.parent.document.dispatchEvent(event);
 		}
 
@@ -60,7 +60,7 @@
 			if(p5.instance._setupDone){
 				clearTimeout(statusTimer);
 				var myCustomData = {'status': true};
-				var event = new CustomEvent('myEvent', { detail: myCustomData });
+				var event = new CustomEvent('p5Status', { detail: myCustomData });
 				window.parent.document.dispatchEvent(event);
 			}else{
 				statusTimer = setTimeout(function(){sketchStatus();}, 50);

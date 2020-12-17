@@ -18,8 +18,19 @@
 		// update sketches list here!
 		var sketchesList = [
 			"P5L_reactive-recode-20-intro"
-			,"P5L_reactive-recode-template"
-			,"" // <-- add your sketch name here!
+			,"Jill_Sangye" // <-- add your sketch name here!
+			,"julia_monika_finalversion"
+			,"P5L_JacquelineS_NadineN_TransformationB_JosefAlbers"
+			,"P5L_Loredano_Sophie_AtsuhikoIwakoshi"
+			,"P5L_ninety_parallel_sinusoids_noah_jona_20201217112521"
+			,"P5L_project_christmastree_001_20201217105356"
+			,"P5L_Selina_Baud_Sweesan_Paskaran_Juergen_Lit_Fischer_"
+			,"P5L_spires_of_illusion"
+			,"recoding_project_florentina_sinja"
+			,"richardPaulLohse_larissaHaenggli_sarahGlauser"
+			,"sonderegger"
+			,"Malewitsch_lynn_marc"
+			,"anina_robin_recode"
 		]
 	</script>
 
@@ -229,6 +240,7 @@
 			display:none !important;
 		}
 	</style>
+	<script src="includes/js/loopBreaker.min.js"></script>
 </head>
 <body>
 	<div id="p5-drop"> </div>
@@ -516,10 +528,10 @@ function println(msg){
 		// editor.setOption("wrap", true)
 		let includeScripts = [{
 			'local':'includes/p5/p5.min.js',
-			'remote':'https://cdn.jsdelivr.net/npm/p5@1.0.0/lib/p5.min.js'
+			'remote':'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.min.js'
 		}, {
 			'local':'includes/p5/addons/p5.sound.min.js',
-			'remote':'https://cdn.jsdelivr.net/npm/p5@1.0.0/lib/addons/p5.sound.min.js'
+			'remote':'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/addons/p5.sound.min.js'
 		}];
 
 
@@ -541,6 +553,26 @@ function println(msg){
 				sketchLoaded = false;
 			}
 		}
+
+		function addMarker(n){
+			let elementPos = markerID.map(function(x) {return x.line; }).indexOf(n);
+			if (elementPos === -1) {
+				markerID.push({'line':n, 'id':editor.session.addMarker(new Range(n, 0, n, 7000), 'myMarker', 'fullLine')});
+			}
+		}
+
+		function removeMarkers(){
+			for(let i=0; i < markerID.length; i++){
+				editor.session.removeMarker(markerID[i].id);
+			}
+			markerID = [];
+		}
+
+		// set editor BG
+		editor.renderer.on('afterRender', function(){
+			adjustLines();
+		});
+
 
 		/* REACTIVE RECODE functions*/
 		function toggleInfo(){
@@ -905,6 +937,24 @@ function println(msg){
 					}
 				}
 
+				// check all changed positions + if custom function
+				let funName = '';
+				for(let i=0; i<drawPos.length; i++){
+					for(let j=0; j < curPositions.length; j++){
+						let cPos = curPositions[j];
+						if(cPos.row >= drawPos[i].start && cPos.row <= drawPos[i].end){
+							// console.log(drawPos[i].name); // debug where change occured
+							if(drawPos[i].name != 'setup' && drawPos[i].name != 'preload' && drawPos[i].type == 'function'){
+								softFunction = true;
+								drawPosSel = i;
+								funName = drawPos[i].name;
+							}else if(drawPos[i].type == 'class'){
+								softClass = true;
+								drawPosSel = i;
+							}
+						}
+					}
+				}
 
 
 				// if custom function, grab where it's used
@@ -943,7 +993,8 @@ function println(msg){
 			// hardCompile
 			sketchLoaded = false;
 			let el = p5frameTemplate.cloneNode(true);
-			let iFrameBody = el.getElementsByTagName('head')[0];//el.document.getElementsByTagName('body')[0];
+			let iFrameHead = el.getElementsByTagName('head')[0];
+			let iFrameBody = el.getElementsByTagName('body')[0];//el.document.getElementsByTagName('body')[0];
 
 			let scriptsCol = [];
 
@@ -958,25 +1009,39 @@ function println(msg){
 				scriptsCol.push(scriptsList[i]);
 			}
 
+			// old way ***
+			for(let sc of scriptsCol){
+				let s = document.createElement('script');
+				s.type = 'text/javascript';
+				s.src = sc;
+				// s.async = false;
+				iFrameHead.appendChild(s);
+			}
 
 			// load sketch
 			let s = document.createElement('script');
 			s.type = 'text/javascript';
 			let sketchCode = editor.getValue();
 
+			// break infinite loops
+			if(!sketchCode.match(/(\/\/).*(no.*protect)/g)){
+				sketchCode = loopBreaker(sketchCode).code;
+			}
+
 			let updateVars = '\npmouseX=' + p5vars.mouseX + ';\npmouseY=' + p5vars.mouseY + ';\nmouseX=' + p5vars.mouseX + ';\nmouseY=' + p5vars.mouseY + ';\nframeCount=' + p5vars.frameCount + ';\n';
 			let codeSetup = addCode(sketchCode, updateVars, 'setup', 'bottom');
 
 			let fullCode = p5custom.value + codeSetup + 'new p5(); sketchStatus();';
 
-			let sLoader = 'loadjs(' + JSON.stringify(scriptsCol) + ', {success: function() {pingReady("p5Main", ' + JSON.stringify(fullCode) + '); },async: false});';
+			// let sLoader = 'loadjs(' + JSON.stringify(scriptsCol) + ', {success: function() {pingReady("p5Main", ' + JSON.stringify(fullCode) + '); },async: false});';
 
-			s.innerHTML = sLoader;
-			// s.innerHTML = fullCode; // *** old way
-
-			iFrameBody.appendChild(s);
-			// set dynamic html as iframe srcdoc
+			// s.innerHTML = sLoader;
+			s.innerHTML = fullCode; // *** old way
 			p5frame.srcdoc = el.innerHTML;
+
+			p5frame.onload = function(){
+				p5f.document.body.appendChild(s);
+			}
 
 		}
 
@@ -1007,6 +1072,12 @@ function println(msg){
 			}
 			let s = document.createElement('script');
 			s.type = 'text/javascript';
+
+			// break infinite loops
+			if(!editor.getValue().match(/(\/\/).*(no.*protect)/g)){
+				curCodeTemp = loopBreaker(curCodeTemp).code;
+			}
+
 			s.innerHTML = curCodeTemp;
 			p5f.document.head.appendChild(s);
 		}
@@ -1131,30 +1202,39 @@ function println(msg){
 
 
 		function updateBackground(){
-			var bgReg = /background\(([^)]+)\)/;
-			var nonComments = editor.getValue();
+			let bgReg = /background\(([^)]+)\)/;
+			let nonComments = editor.getValue();
 			nonComments = nonComments.replace(/\s*\/\/.*\n/g, '\n').replace(/\s*\/\*[\s\S]*?\*\//g, '');
-			var bgMatches = bgReg.exec(nonComments);
+			let bgMatches = bgReg.exec(nonComments);
 			if(bgMatches != null){
-				var newBG = '';
+				newBG = '';
 				if(bgMatches[1].includes('#')){
 					newBG = bgMatches[1].replace(/["']/g, '');
 				}else{
-					var cols = bgMatches[1].split(',');
+					let cols = bgMatches[1].split(',');
 					if(cols.length > 2){
 						newBG = rgb2hex(cols[0].trim(), cols[1].trim(), cols[2].trim());
 					}else{
 						newBG = rgb2hex(cols[0].trim(), cols[0].trim(), cols[0].trim())
 					}
 				}
-				// document.body.style.background = newBG;
+				if(sketchLoaded){
+					p5f.document.body.style.background = newBG;
+				}
 				p5frame.style.background = newBG;
 			}
 		}
 
 		function rgb2hex(red, green, blue) {
-			var rgb = blue | (green << 8) | (red << 16);
+			let rgb = blue | (green << 8) | (red << 16);
 			return '#' + (0x1000000 + rgb).toString(16).slice(1)
+		}
+
+		function loadScripts(elm){
+			if(settings.debugMode){console.log(settings.scripts);}
+			for(let i=0; i < settings.scripts.length; i++){
+				elm.appendChild(loadScript(settings.scripts[i]));
+			}
 		}
 
 
