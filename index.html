@@ -636,6 +636,16 @@ function println(msg){
 		  return 0;
 		}
 
+		function makeid(length) {
+		   var result           = '';
+		   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		   var charactersLength = characters.length;
+		   for ( var i = 0; i < length; i++ ) {
+		      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		   }
+		   return result;
+		}
+
 		function loadSketches(){
 			for(var i=0; i<sketchesList.length; i++){
 				if(sketchesList[i] == ''){
@@ -643,7 +653,8 @@ function println(msg){
 				}
 				let s = {};
 				s.fileName = sketchesList[i];
-				let codeImport = importSketch('sketches/'+sketchesList[i]+'.json').structure[0].code;
+				let randomID = makeid(5); // prevent cache on updated sketches!
+				let codeImport = importSketch('sketches/'+sketchesList[i]+'.json?'+randomID).structure[0].code;
 				let sketchCredits = codeImport;
 				// console.log(codeImport)
 				sketchCredits = sketchCredits.replace(/(?:\r\n|\r|\n|\t)/g, '');
